@@ -86,7 +86,7 @@ Berikut ini adalah hasil pengujian dengan file html 20KB :
 Dan berikut ini adalah webserver custom yang dibuat dengan event-based server
 
 
-##CUSTOM
+##EVENT BASED WEB SERVER - (2)
 
 ###500B
 
