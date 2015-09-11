@@ -91,6 +91,26 @@ Dan berikut ini adalah webserver custom yang dibuat dengan event-based server
 
 ##EVENT BASED WEB SERVER - (2)
 
+Program kecil web server dengan menggunakan pendekatan event-based server dan library libevent.
+
+ 1.  Lakukan instalasi libevent 
+```
+sudo apt-get install libevent-dev
+```
+ 2. Lakukan make file
+```
+ make build
+```
+ 3. Jalankan server
+```
+./server
+```
+
+4. Coba akses di browser
+```
+http://127.0.0.1:8080
+```
+
 ###500B
 
 Berikut ini adalah hasil pengujian dengan file html 500B : 
