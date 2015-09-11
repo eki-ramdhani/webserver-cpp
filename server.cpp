@@ -1,121 +1,82 @@
-
-#include <stdio.h>
-#include <strings.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/queue.h>
 #include <stdlib.h>
-#include <netinet/in.h>
-#include <ev.h>
+#include <err.h>
+#include <event.h>
+#include <evhttp.h>
+#include <fstream>
+#include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+using namespace std;
 
-#define PORT_NO 3033
-#define BUFFER_SIZE 1024
+typedef struct {
+  int port;
+  string folder;
+} config;
 
-int total_clients = 0;  // Total number of connected clients
+int getPort() {
+  ifstream fs("config");
+  config ret;
+  fs >> ret.port;
+  fs >> ret.folder;
+  return ret.port;
+}
 
-void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
-void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
+string getFolder() {
+  ifstream fs("config");
+  config ret;
+  fs >> ret.port;
+  fs >> ret.folder;
+  return ret.folder;
+}
 
-int main() {
-  int sd;
-  struct sockaddr_in addr;
-  int addr_len = sizeof(addr);
+void generic_handler(struct evhttp_request *req, void *arg) {
+    struct evbuffer *buf;
+    string s = req->uri;
+    if (s[s.length()-1] == '/') {
+      s+="index.html";
+    }
+    struct stat st;
+    buf = evbuffer_new();
+    int fd = -1;
+    string folder = getFolder();
+    if ((fd = open((folder + s).c_str(), O_RDONLY)) < 0) {
+      evhttp_send_error(req, 404, "Not found");
+    }
 
-  // Create server socket
-  if((sd = socket(PF_INET, SOCK_STREAM, 0)) < 0 ) {
-    perror("socket error");
-    return -1;
-  }
+    if (fstat(fd, &st)<0) {
+      /* Make sure the length still matches, now that we
+       * opened the file :/ */
+      evhttp_send_error(req, 404, "Not found");
+    }
 
-  bzero(&addr, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(PORT_NO);
-  addr.sin_addr.s_addr = INADDR_ANY;
+    if (buf == NULL)
+        err(1, "failed to create response buffer");
+    evbuffer_add_file(buf, fd, 0, st.st_size);
+    evhttp_send_reply(req, HTTP_OK, "OK", buf);
+    cout << fd << endl;
+    evbuffer_free(buf);
+}
 
-  // Bind socket to address
-  if (bind(sd, (struct sockaddr*) &addr, sizeof(addr)) != 0) {
-    perror("bind error");
-  }
+int main(int argc, char **argv) {
+  struct evhttp *httpd;
+  event_init();
+  
+  int port = getPort();
+  
+  httpd = evhttp_start("127.0.0.1", port);
+  // cout << conf.folder << endl;
+  /* Set a callback for requests to "/specific". */
+  /* evhttp_set_cb(httpd, "/specific", another_handler, NULL); */
 
-  // Start listing on the socket
-  if (listen(sd, 2) < 0) {
-    perror("listen error");
-    return -1;
-  }
+  /* Set a callback for all other requests. */
+  evhttp_set_gencb(httpd, generic_handler, NULL);
 
-  // Part inilah yang membedakan socket programming biasa dengan event-based programming
-  // Initialize and start a watcher to accepts client requests
-  struct ev_loop *loop = ev_default_loop(0);
-  struct ev_io w_accept;
-
-  ev_io_init(&w_accept, accept_cb, sd, EV_READ);
-  ev_io_start(loop, &w_accept);
-
-  // Start infinite loop
-  while (1) {
-    ev_loop(loop, 0);
-  }
-
+  event_dispatch();    /* Not reached in this code as it is now. */
+  evhttp_free(httpd);
+    
   return 0;
-}
-
-/* Accept client requests */
-void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
-  struct sockaddr_in client_addr;
-  socklen_t client_len = sizeof(client_addr);
-  int client_sd;
-  struct ev_io *w_client = (struct ev_io*) malloc (sizeof(struct ev_io));
-
-  if(EV_ERROR & revents) {
-    perror("got invalid event");
-    return;
-  }
-
-  // Accept client request
-  client_sd = accept(watcher->fd, (struct sockaddr *)&client_addr, &client_len);
-
-  if (client_sd < 0) {
-    perror("accept error");
-    return;
-  }
-
-  total_clients++; // Increment total_clients count
-  printf("Successfully connected with client.\n");
-  printf("%d client(s) connected.\n", total_clients);
-
-  // Initialize and start watcher to read client requests
-  ev_io_init(w_client, read_cb, client_sd, EV_READ);
-  ev_io_start(loop, w_client);
-}
-
-/* Read client message */
-void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
-  char buffer[BUFFER_SIZE];
-  ssize_t read;
-
-  if(EV_ERROR & revents) {
-    perror("got invalid event");
-    return;
-  }
-
-  // Receive message from client socket
-  read = recv(watcher->fd, buffer, BUFFER_SIZE, 0);
-
-  if(read < 0) {
-    perror("read error");
-    return;
-  }
-
-  if(read == 0) {
-    // Stop and free watchet if client socket is closing
-    ev_io_stop(loop,watcher);
-    free(watcher);
-    perror("peer might closing");
-    total_clients --; // Decrement total_clients count
-    printf("%d client(s) connected.\n", total_clients);
-    return;
-  } else {
-    printf("message:%s\n",buffer);
-  }
-
-  // Send message bach to the client
-  send(watcher->fd, buffer, read, 0);
-  bzero(buffer, read);
 }
