@@ -35,15 +35,17 @@ string getFolder() {
 
 void generic_handler(struct evhttp_request *req, void *arg) {
     struct evbuffer *buf;
-    string s = req->uri;
-    if (s[s.length()-1] == '/') {
-      s+="index.html";
-    }
+    const char* s = evhttp_request_get_uri(req);
     struct stat st;
     buf = evbuffer_new();
     int fd = -1;
     string folder = getFolder();
-    if ((fd = open((folder + s).c_str(), O_RDONLY)) < 0) {
+    string fullpath = folder.append(s);
+    if (fullpath[fullpath.length()-1] == '/') {
+      fullpath+="index.html";
+    }
+    cout << fullpath << endl;
+    if ((fd = open(fullpath.c_str(), O_RDONLY)) < 0) {
       evhttp_send_error(req, 404, "Not found");
     }
 
