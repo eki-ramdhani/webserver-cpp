@@ -1,3 +1,6 @@
+Tegar Aji Pangestu (13512061)
+Willy (13512065)
+
 #Benchmark
 
 Tools yang digunakan pada benchmarking web server adalah ApacheBench. Cara melakukan test adalah sebagai berikut (Testing dilakukan pada OS Ubuntu 14.04) : 
@@ -83,3 +86,31 @@ Berikut ini adalah hasil pengujian dengan file html 20KB :
 | Memory Usage: | 0.1% (mean) |
 
 
+Dan berikut ini adalah webserver custom yang dibuat dengan event-based server
+
+
+##EVENT BASED WEB SERVER - (2)
+
+###500B
+
+Berikut ini adalah hasil pengujian dengan file html 500B : 
+
+| Parameters | Result |
+| :--------------------  | ---------------------------- |
+|Requests per second:    |1976.36 [#/sec] (mean)|
+|Time per request:       |1.012 [ms] (mean)|
+|Time per request:       |0.506 [ms] (mean, across all concurrent requests)|
+|Transfer rate:          |318.50 [Kbytes/sec] received|
+|Memory Usage: |0.1% (mean)|
+
+###20KB
+
+Berikut ini adalah hasil pengujian dengan file html 20KB : 
+
+| Parameters | Result |
+| :------------------	 | ---------------------------- |
+|Requests per second:    |2645.75 [#/sec] (mean)|
+|Time per request:       |0.756 [ms] (mean)|
+|Time per request:       |0.378 [ms] (mean, across all concurrent requests)|
+|Transfer rate:          |436.35 [Kbytes/sec] received|
+|Memory Usage: |0.1% (mean)|
