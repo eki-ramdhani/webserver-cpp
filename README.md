@@ -1,3 +1,6 @@
+Tegar Aji Pangestu (13512061)
+Willy (13512065)
+
 #Benchmark
 
 Tools yang digunakan pada benchmarking web server adalah ApacheBench. Cara melakukan test adalah sebagai berikut (Testing dilakukan pada OS Ubuntu 14.04) : 
